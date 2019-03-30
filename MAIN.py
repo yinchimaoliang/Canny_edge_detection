@@ -4,10 +4,12 @@ import math
 
 
 
-IMAGE_PATH = "./Images/Dorothea.jpg"
+IMAGE_PATH = "./Images/Sigrid.jpg"
 OUTPUT_PATH = "./Images/result.jpg"
 RADIUS = 5
-SIGMA = 5
+SIGMA = 1
+TL_PARA = 0.1
+TH_PA = 0.3
 
 
 class Main():
@@ -65,47 +67,47 @@ class Main():
                     grad_x = self.dx[i,j]
                     grad_y = self.dy[i,j]
                     grad_temp = self.d[i,j]
-                if np.abs(grad_x) < np.abs(grad_y):
-                    weight = np.abs(grad_x) / np.abs(grad_y)
-                    grad2 = self.d[i - 1,j]
-                    grad4 = self.d[i + 1,j]
-                    if grad_x * grad_y > 0:
-                        grad1 = self.d[i - 1,j - 1]
-                        grad3 = self.d[i + 1,j + 1]
+                    if np.abs(grad_x) < np.abs(grad_y):
+                        weight = np.abs(grad_x) / np.abs(grad_y)
+                        grad2 = self.d[i - 1,j]
+                        grad4 = self.d[i + 1,j]
+                        if grad_x * grad_y > 0:
+                            grad1 = self.d[i - 1,j - 1]
+                            grad3 = self.d[i + 1,j + 1]
+
+                        else:
+                            grad1 = self.d[i - 1,j + 1]
+                            grad3 = self.d[i + 1,j - 1]
 
                     else:
-                        grad1 = self.d[i - 1,j + 1]
-                        grad3 = self.d[i + 1,j - 1]
+                        weight = np.abs(grad_y) / np.abs(grad_x)
+                        grad2 = self.d[i, j - 1]
+                        grad4 = self.d[i, j + 1]
+                        if grad_x * grad_y > 0:
+                            grad1 = self.d[i + 1, j - 1]
+                            grad3 = self.d[i - 1, j + 1]
 
-                else:
-                    weight = np.abs(grad_y) / np.abs(grad_x)
-                    grad2 = self.d[i, j - 1]
-                    grad4 = self.d[i, j + 1]
-                    if grad_x * grad_y > 0:
-                        grad1 = self.d[i + 1, j - 1]
-                        grad3 = self.d[i - 1, j + 1]
+                        else:
+                            grad1 = self.d[i - 1, j - 1]
+                            grad3 = self.d[i + 1, j + 1]
 
+                    gradTemp1 = weight * grad1 + (1 - weight) * grad2
+                    gradTemp2 = weight * grad3 + (1 - weight) * grad4
+                    if grad_temp >= gradTemp1 and grad_temp >= gradTemp2:
+                        self.NMS[i, j] = grad_temp
                     else:
-                        grad1 = self.d[i - 1, j - 1]
-                        grad3 = self.d[i + 1, j + 1]
-
-                gradTemp1 = weight * grad1 + (1 - weight) * grad2
-                gradTemp2 = weight * grad3 + (1 - weight) * grad4
-                if grad_temp >= gradTemp1 and grad_temp >= gradTemp2:
-                    self.NMS[i, j] = grad_temp
-                else:
-                    self.NMS[i, j] = 0
+                        self.NMS[i, j] = 0
 
 
 
     def canny(self):
-        # self.myGaussian(self.img)
+        self.myGaussian(self.img)
         self.getGradient()
         self.myNMS()
         h,w = self.NMS.shape
         result = np.zeros([h,w])
-        TL = 0.2 * np.max(self.NMS)
-        TH = 0.3 * np.max(self.NMS)
+        TL = TL_PARA * np.max(self.NMS)
+        TH = TH_PA * np.max(self.NMS)
         for i in range(h):
             for j in range(w):
                 if (self.NMS[i, j] < TL):
@@ -114,12 +116,11 @@ class Main():
                 elif (self.NMS[i, j] > TH):
                     result[i, j] = 255
 
-                    # 连接
+                #连接
                 elif (self.NMS[i - 1, j - 1:j + 1] < TH).any() or (self.NMS[i + 1, j - 1:j + 1].any()
                                                               or (self.NMS[i, [j - 1, j + 1]] < TH).any()):
                     result[i, j] = 255
         cv.imwrite(OUTPUT_PATH,result)
-
 
 
 
