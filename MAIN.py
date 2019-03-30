@@ -42,21 +42,83 @@ class Main():
     def getGradient(self):
         trans = self.myGaussian(self.img)
         h,w = trans.shape
-        dx = np.zeros([h - 1,w - 1])
-        dy = np.zeros([h - 1,w - 1])
+        self.dx = np.zeros([h - 1,w - 1])
+        self.dy = np.zeros([h - 1,w - 1])
         self.d = np.zeros([h - 1,w - 1])
         for i in range(h - 1):
             for j in range(w - 1):
-                dx[i][j] = trans[i,j + 1] - trans[i,j]
-                dy[i][j] = trans[i + 1,j] - trans[i,j]
-                self.d[i][j] = np.sqrt(np.square(dx[i,j]) + np.square(dy[i,j]))
+                self.dx[i][j] = trans[i,j + 1] - trans[i,j]
+                self.dy[i][j] = trans[i + 1,j] - trans[i,j]
+                self.d[i][j] = np.sqrt(np.square(self.dx[i,j]) + np.square(self.dy[i,j]))
                 # print(i,j)
+
+
+    def myNMS(self):
+        self.NMS = np.copy(self.d)
+        h,w = self.NMS.shape
+        self.NMS[0,:] = self.NMS[h - 1,:] = self.NMS[:,w - 1] = self.NMS[:,0] = 0
+        for i in range(1,h - 1):
+            for j in range(1,w - 1):
+                if self.d[i,j] == 0:
+                    self.NMS[i,j] = 0
+                else:
+                    grad_x = self.dx[i,j]
+                    grad_y = self.dy[i,j]
+                    grad_temp = self.d[i,j]
+                if np.abs(grad_x) < np.abs(grad_y):
+                    weight = np.abs(grad_x) / np.abs(grad_y)
+                    grad2 = self.d[i - 1,j]
+                    grad4 = self.d[i + 1,j]
+                    if grad_x * grad_y > 0:
+                        grad1 = self.d[i - 1,j - 1]
+                        grad3 = self.d[i + 1,j + 1]
+
+                    else:
+                        grad1 = self.d[i - 1,j + 1]
+                        grad3 = self.d[i + 1,j - 1]
+
+                else:
+                    weight = np.abs(grad_y) / np.abs(grad_x)
+                    grad2 = self.d[i, j - 1]
+                    grad4 = self.d[i, j + 1]
+                    if grad_x * grad_y > 0:
+                        grad1 = self.d[i + 1, j - 1]
+                        grad3 = self.d[i - 1, j + 1]
+
+                    else:
+                        grad1 = self.d[i - 1, j - 1]
+                        grad3 = self.d[i + 1, j + 1]
+
+                gradTemp1 = weight * grad1 + (1 - weight) * grad2
+                gradTemp2 = weight * grad3 + (1 - weight) * grad4
+                if grad_temp >= gradTemp1 and grad_temp >= gradTemp2:
+                    self.NMS[i, j] = grad_temp
+                else:
+                    self.NMS[i, j] = 0
+
 
 
     def canny(self):
         # self.myGaussian(self.img)
         self.getGradient()
+        self.myNMS()
+        h,w = self.NMS.shape
+        result = np.zeros([h,w])
+        TL = 0.2 * np.max(self.NMS)
+        TH = 0.3 * np.max(self.NMS)
+        for i in range(h):
+            for j in range(w):
+                if (self.NMS[i, j] < TL):
+                    result[i, j] = 0
 
+                elif (self.NMS[i, j] > TH):
+                    result[i, j] = 255
+
+                    # 连接
+                elif (self.NMS[i - 1, j - 1:j + 1] < TH).any() or (self.NMS[i + 1, j - 1:j + 1].any()
+                                                              or (self.NMS[i, [j - 1, j + 1]] < TH).any()):
+                    result[i, j] = 255
+        cv.imwrite(OUTPUT_PATH,result)
 
 
 
