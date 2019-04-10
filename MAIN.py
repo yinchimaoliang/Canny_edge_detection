@@ -4,12 +4,12 @@ import math
 
 
 
-IMAGE_PATH = "./Images/Sigrid.jpg"
+IMAGE_PATH = "./Images/Lena.png"
 OUTPUT_PATH = "./Images/result.jpg"
 RADIUS = 5
 SIGMA = 1
 TL_PARA = 0.1
-TH_PA = 0.3
+TH_PA = 0.5
 
 
 class Main():
@@ -116,11 +116,24 @@ class Main():
                 elif (self.NMS[i, j] > TH):
                     result[i, j] = 255
 
-                #连接
-                elif (self.NMS[i - 1, j - 1:j + 1] < TH).any() or (self.NMS[i + 1, j - 1:j + 1].any()
-                                                              or (self.NMS[i, [j - 1, j + 1]] < TH).any()):
+                # elif i == 1 and j == 1 and self.myBFS(i,j,self.NMS,TL,TH):
+                #     result[i][j] = 255
+                # print((self.NMS[i, [j-1, j+1]] < TH).any())
+                elif (self.NMS[i - 1, j - 1:j + 1] < TH).any() or (self.NMS[i + 1, j - 1:j + 1] < TH).any() or (self.NMS[i - 1 : i + 1, j - 1] < TH).any()\
+                        or (self.NMS[i + 1 : i + 1, j - 1] < TH).any():
                     result[i, j] = 255
         cv.imwrite(OUTPUT_PATH,result)
+
+
+    # def myBFS(self,x,y,matrix,TL,TH):
+    #     if x < 0 or y < 0 or x >= len(matrix) or y >= len(matrix[0]):
+    #         return False
+    #     if matrix[x][y] > TH:
+    #         return True
+    #     if matrix[x][y] < TL:
+    #         return False
+    #
+    #     return self.myBFS(x + 1,y,matrix,TL,TH) or self.myBFS(x - 1,y,matrix,TL,TH) or self.myBFS(x,y - 1,matrix,TL,TH) or self.myBFS(x,y + 1,matrix,TL,TH)
 
 
 
